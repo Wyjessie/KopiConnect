@@ -203,6 +203,11 @@ export function adjustWeightsFromFeedback(
   // This is a simplified AI learning approach
   // In production, you'd use more sophisticated ML techniques
   
+  // Return current weights if no matches to learn from
+  if (successfulMatches.length === 0) {
+    return currentWeights;
+  }
+  
   const avgRating = successfulMatches.reduce((sum, m) => sum + m.feedback.rating, 0) / successfulMatches.length;
   
   // If average rating is high (>3.5), increase weights slightly
