@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  name              String
+  passwordHash      String
+  age               Int?
+  gender            String?
+  background        String?
+  bio               String?
+  location          String?   // General location in Singapore
+  dietaryRestrictions String?  // JSON array of restrictions
+  budgetMin         Float?
+  budgetMax         Float?
+  interests         String?   // JSON array of interests
+  preferredGender   String?   // Preference for match gender
+  preferredAgeMin   Int?
+  preferredAgeMax   Int?
+  preferredBackground String? // Preference for match background
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  matchesInitiated  Match[]   @relation("InitiatedMatches")
+  matchesReceived   Match[]   @relation("ReceivedMatches")
+  availability      Availability[]
+  feedbacks         Feedback[]
+}
+
+model Availability {
+  id        String   @id @default(uuid())
+  userId    String
+  dayOfWeek Int      // 0-6 for Sunday-Saturday
+  startTime String   // HH:MM format
+  endTime   String   // HH:MM format
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, dayOfWeek, startTime])
+}
+
+model Match {
+  id              String   @id @default(uuid())
+  initiatorId     String
+  recipientId     String
+  status          String   // pending, accepted, rejected, completed
+  proposedDate    DateTime?
+  proposedTime    String?  // HH:MM format
+  proposedLocation String?
+  matchScore      Float?   // AI-calculated match score
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  initiator       User     @relation("InitiatedMatches", fields: [initiatorId], references: [id], onDelete: Cascade)
+  recipient       User     @relation("ReceivedMatches", fields: [recipientId], references: [id], onDelete: Cascade)
+  feedbacks       Feedback[]
+}
+
+model Feedback {
+  id            String   @id @default(uuid())
+  matchId       String
+  userId        String
+  rating        Int      // 1-5 stars
+  comment       String?
+  wasHelpful    Boolean? // Whether the match was helpful
+  willMeetAgain Boolean? // Whether they'd meet again
+  createdAt     DateTime @default(now())
+  
+  match         Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([matchId, userId])
+}
+
+model FoodCourt {
+  id        String   @id @default(uuid())
+  name      String
+  address   String
+  latitude  Float
+  longitude Float
+  region    String   // North, South, East, West, Central
+  createdAt DateTime @default(now())
+}
